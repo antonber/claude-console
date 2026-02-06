@@ -517,6 +517,44 @@
     color: var(--cyan);
   }
 
+  .card-type-badge.thinking {
+    background: linear-gradient(90deg, rgba(52,211,153,0.15), rgba(52,211,153,0.25), rgba(52,211,153,0.15));
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+    color: var(--green);
+  }
+
+  .card-type-badge.idle-open {
+    background: rgba(251,191,36,0.12);
+    color: var(--amber);
+  }
+
+  .home-card.thinking-card {
+    border-color: rgba(52,211,153,0.35);
+    animation: pulse-glow 2s ease-in-out infinite;
+    --glow-color: rgba(52,211,153,0.3);
+  }
+
+  .home-card.idle-card {
+    border-color: rgba(251,191,36,0.2);
+  }
+
+  .thinking-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse-fast 0.8s infinite;
+    display: inline-block;
+  }
+
+  .idle-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+    display: inline-block;
+    opacity: 0.7;
+  }
+
   .home-card .card-title {
     font-size: 14px;
     font-weight: 600;
@@ -594,6 +632,167 @@
 
   .transcript-entry.assistant-msg {
     padding: 10px 14px;
+  }
+
+  /* ── Session Detail Enhancements ──────────────────────────────── */
+  .session-sidebar .sidebar-sparkline {
+    margin: 12px 0;
+    height: 40px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    padding: 6px;
+  }
+
+  .session-sidebar .sidebar-sparkline svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .sidebar-tool-list {
+    margin-top: 4px;
+  }
+
+  .sidebar-tool-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 11px;
+  }
+
+  .sidebar-tool-row .tool-name-label {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sidebar-tool-row .tool-count-label {
+    font-family: 'SF Mono', monospace;
+    color: var(--purple);
+    font-weight: 600;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .sidebar-mini-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 2px;
+    margin-top: 2px;
+    overflow: hidden;
+  }
+
+  .sidebar-mini-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--purple), var(--blue));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .thinking-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    margin: 8px 0;
+    border-radius: 10px;
+    background: rgba(52,211,153,0.04);
+    border: 1px solid rgba(52,211,153,0.15);
+    animation: fade-in 0.3s ease-out;
+  }
+
+  .thinking-indicator .thinking-dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .thinking-indicator .thinking-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: thinkBounce 1.4s ease-in-out infinite;
+  }
+
+  .thinking-indicator .thinking-dots span:nth-child(2) { animation-delay: 0.16s; }
+  .thinking-indicator .thinking-dots span:nth-child(3) { animation-delay: 0.32s; }
+
+  @keyframes thinkBounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  .thinking-indicator .thinking-label {
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  .session-status-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .session-status-live .status-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse-fast 1s infinite;
+  }
+
+  .sidebar-stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .sidebar-stat-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .sidebar-stat-box .stat-number {
+    font-size: 20px;
+    font-weight: 800;
+    font-family: 'SF Mono', monospace;
+    line-height: 1;
+  }
+
+  .sidebar-stat-box .stat-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .session-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60%;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .session-empty-state .empty-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+
+  .session-empty-state .empty-text {
+    font-size: 14px;
+    max-width: 300px;
+    line-height: 1.5;
   }
 
   .transcript-entry .entry-label {
@@ -677,6 +876,281 @@
     background: var(--green);
     animation: pulse-fast 1s infinite;
     display: inline-block;
+  }
+
+  /* ── Stats Banner ───────────────────────────────────────────── */
+  .stats-banner {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--stat-color, var(--cyan));
+    opacity: 0.4;
+  }
+
+  .stat-card .stat-number {
+    font-size: 32px;
+    font-weight: 800;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--stat-color, var(--text-primary));
+    line-height: 1;
+  }
+
+  .stat-card .stat-number.has-glow {
+    text-shadow: 0 0 20px var(--stat-color, var(--cyan));
+  }
+
+  .stat-card .stat-card-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  /* ── Activity Heatmap ───────────────────────────────────────── */
+  .heatmap-container {
+    margin-bottom: 24px;
+  }
+
+  .heatmap-container .home-section-title {
+    margin-bottom: 8px;
+  }
+
+  .heatmap-wrap {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .heatmap-grid {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .heatmap-cell {
+    rx: 2;
+    ry: 2;
+    transition: opacity 0.2s;
+  }
+
+  .heatmap-cell:hover {
+    stroke: var(--text-primary);
+    stroke-width: 1;
+  }
+
+  /* ── Live Activity Ticker ───────────────────────────────────── */
+  .ticker-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 12px 16px;
+    overflow: hidden;
+    position: relative;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ticker-container::before,
+  .ticker-container::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 40px;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .ticker-container::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--bg-card), transparent);
+  }
+
+  .ticker-container::after {
+    right: 0;
+    background: linear-gradient(270deg, var(--bg-card), transparent);
+  }
+
+  .ticker-track {
+    display: inline-flex;
+    gap: 12px;
+    animation: tickerSlide 30s linear infinite;
+  }
+
+  .ticker-track:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes tickerSlide {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 11px;
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .ticker-item .ticker-icon {
+    font-size: 12px;
+  }
+
+  .ticker-item .ticker-time {
+    color: var(--text-muted);
+    font-family: 'SF Mono', monospace;
+    font-size: 10px;
+  }
+
+  /* ── Tool Usage Chart ───────────────────────────────────────── */
+  .tool-chart {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .tool-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .tool-bar-label {
+    font-size: 11px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--text-muted);
+    width: 90px;
+    text-align: right;
+    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tool-bar-track {
+    flex: 1;
+    height: 18px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .tool-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--cyan), var(--blue));
+    transition: width 0.6s ease-out;
+    min-width: 2px;
+  }
+
+  .tool-bar-count {
+    font-size: 10px;
+    font-family: 'SF Mono', monospace;
+    color: var(--text-muted);
+    width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── Sparkline ──────────────────────────────────────────────── */
+  .sparkline-container {
+    margin-top: 8px;
+    height: 30px;
+    width: 100%;
+  }
+
+  .sparkline-container svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  @keyframes sparkPulse {
+    0%, 100% { r: 2.5; opacity: 1; }
+    50% { r: 4; opacity: 0.6; }
+  }
+
+  .spark-pulse {
+    animation: sparkPulse 1.5s ease-in-out infinite;
+  }
+
+  /* ── Health Ring ─────────────────────────────────────────────── */
+  .health-ring-container {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .health-ring-container svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .health-ring-label {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 9px;
+    font-weight: 700;
+    font-family: 'SF Mono', monospace;
+    color: var(--text-primary);
+  }
+
+  /* ── Heatmap + Ticker Row ───────────────────────────────────── */
+  .viz-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .viz-row {
+      grid-template-columns: 1fr;
+    }
+    .stats-banner {
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      min-width: calc(50% - 6px);
+    }
   }
 </style>
 </head>
@@ -1042,9 +1516,438 @@ function getAllMembers(team) {
   return Array.from(memberMap.values());
 }
 
+// ── Home Screen Visualizations ──────────────────────────────────────
+
+// Animated counter state
+let bannerAnimState = {};
+let bannerAnimFrame = null;
+let homeStateFingerprint = '';
+
+function getHomeFingerprint() {
+  const s = state.sessions || [];
+  const t = state.teams || {};
+  const h = state.history || [];
+  // Include session status so cards update when thinking/idle transitions
+  // (counters are animated via updateBannerTargets without DOM rebuild)
+  return [
+    s.length,
+    Object.keys(t).length,
+    h.length,
+    s.map(x => x.sessionId + ':' + (x.status || x.isActive)).join(','),
+    Object.keys(t).sort().join(','),
+  ].join('|');
+}
+
+function animateCounters() {
+  let allDone = true;
+  for (const key of Object.keys(bannerAnimState)) {
+    const s = bannerAnimState[key];
+    if (s.current !== s.target) {
+      allDone = false;
+      const progress = Math.min(1, (Date.now() - s.startTime) / 800);
+      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      s.current = Math.round(s.start + (s.target - s.start) * eased);
+      const el = document.getElementById('stat-num-' + key);
+      if (el) el.textContent = s.current.toLocaleString();
+      if (progress >= 1) s.current = s.target;
+    }
+  }
+  if (!allDone) bannerAnimFrame = requestAnimationFrame(animateCounters);
+}
+
+// Update counter animation targets without touching DOM structure
+function updateBannerTargets() {
+  const sessions = state.sessions || [];
+  const teams = state.teams || {};
+  const history = state.history || [];
+
+  const targets = {
+    totalSessions: sessions.length,
+    thinking: sessions.filter(s => s.status === 'thinking').length,
+    openIdle: sessions.filter(s => s.status === 'idle').length + Object.keys(teams).length,
+    totalMessages: sessions.reduce((sum, s) => sum + (s.messageCount || 0), 0),
+    swarmsRun: Object.keys(teams).length + history.length,
+  };
+
+  const now = Date.now();
+  for (const [key, value] of Object.entries(targets)) {
+    if (!bannerAnimState[key]) {
+      bannerAnimState[key] = { current: 0, target: value, start: 0, startTime: now };
+    } else if (bannerAnimState[key].target !== value) {
+      bannerAnimState[key].start = bannerAnimState[key].current;
+      bannerAnimState[key].target = value;
+      bannerAnimState[key].startTime = now;
+    }
+  }
+
+  // Update glow classes
+  const thinkEl = document.getElementById('stat-num-thinking');
+  if (thinkEl) {
+    if (targets.thinking > 0) thinkEl.classList.add('has-glow');
+    else thinkEl.classList.remove('has-glow');
+  }
+
+  if (bannerAnimFrame) cancelAnimationFrame(bannerAnimFrame);
+  bannerAnimFrame = requestAnimationFrame(animateCounters);
+}
+
+function renderStatsBanner() {
+  const sessions = state.sessions || [];
+  const teams = state.teams || {};
+  const history = state.history || [];
+
+  const stats = [
+    { key: 'totalSessions', label: 'Total Sessions', value: sessions.length, color: 'var(--blue)', glow: false },
+    { key: 'thinking', label: 'Thinking', value: sessions.filter(s => s.status === 'thinking').length, color: 'var(--green)', glow: true },
+    { key: 'openIdle', label: 'Open', value: sessions.filter(s => s.status === 'idle').length + Object.keys(teams).length, color: 'var(--amber)', glow: false },
+    { key: 'totalMessages', label: 'Total Messages', value: sessions.reduce((sum, s) => sum + (s.messageCount || 0), 0), color: 'var(--cyan)', glow: false },
+    { key: 'swarmsRun', label: 'Swarms Run', value: Object.keys(teams).length + history.length, color: 'var(--purple)', glow: false },
+  ];
+
+  // Initialize animation state
+  const now = Date.now();
+  for (const s of stats) {
+    if (!bannerAnimState[s.key]) {
+      bannerAnimState[s.key] = { current: 0, target: s.value, start: 0, startTime: now };
+    } else if (bannerAnimState[s.key].target !== s.value) {
+      bannerAnimState[s.key].start = bannerAnimState[s.key].current;
+      bannerAnimState[s.key].target = s.value;
+      bannerAnimState[s.key].startTime = now;
+    }
+  }
+
+  if (bannerAnimFrame) cancelAnimationFrame(bannerAnimFrame);
+  bannerAnimFrame = requestAnimationFrame(animateCounters);
+
+  return `<div class="stats-banner">${stats.map(s => {
+    const display = bannerAnimState[s.key] ? bannerAnimState[s.key].current : s.value;
+    const glowClass = s.glow && s.value > 0 ? 'has-glow' : '';
+    return `<div class="stat-card" style="--stat-color: ${s.color};">
+      <div class="stat-number ${glowClass}" id="stat-num-${s.key}" style="color: ${s.color};">${display.toLocaleString()}</div>
+      <div class="stat-card-label">${s.label}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── Activity Heatmap ────────────────────────────────────────────────
+function renderHeatmap() {
+  const sessions = state.sessions || [];
+  const now = new Date();
+  const dayMs = 86400000;
+
+  // Build day counts for last 56 days (8 weeks)
+  const dayCounts = {};
+  for (const s of sessions) {
+    if (!s.modified) continue;
+    const d = new Date(s.modified);
+    const dayKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    dayCounts[dayKey] = (dayCounts[dayKey] || 0) + 1;
+  }
+
+  // Also count history items
+  for (const h of (state.history || [])) {
+    if (!h.archivedAt) continue;
+    const d = new Date(h.archivedAt);
+    const dayKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    dayCounts[dayKey] = (dayCounts[dayKey] || 0) + 1;
+  }
+
+  const maxCount = Math.max(1, ...Object.values(dayCounts));
+  const cellSize = 14;
+  const cellGap = 3;
+  const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+  const labelWidth = 28;
+
+  // Calculate starting point: 8 weeks back, aligned to Sunday
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayDay = today.getDay(); // 0=Sun
+  const startDate = new Date(today.getTime() - (55 + todayDay) * dayMs);
+
+  const weeks = 8;
+  const rects = [];
+  const monthLabels = [];
+  let lastMonth = -1;
+
+  for (let w = 0; w < weeks; w++) {
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(startDate.getTime() + (w * 7 + d) * dayMs);
+      if (date > today) continue;
+      const dayKey = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+      const count = dayCounts[dayKey] || 0;
+
+      // Color intensity: 4 levels
+      let fill;
+      if (count === 0) fill = 'rgba(255,255,255,0.04)';
+      else if (count <= maxCount * 0.25) fill = 'rgba(34,211,238,0.2)';
+      else if (count <= maxCount * 0.5) fill = 'rgba(34,211,238,0.4)';
+      else if (count <= maxCount * 0.75) fill = 'rgba(34,211,238,0.65)';
+      else fill = 'rgba(34,211,238,0.9)';
+
+      const x = labelWidth + w * (cellSize + cellGap);
+      const y = 16 + d * (cellSize + cellGap);
+      const title = `${date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}: ${count} session${count !== 1 ? 's' : ''}`;
+      rects.push(`<rect class="heatmap-cell" x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${fill}"><title>${title}</title></rect>`);
+
+      // Month label
+      if (d === 0 && date.getMonth() !== lastMonth) {
+        lastMonth = date.getMonth();
+        monthLabels.push(`<text x="${x}" y="10" fill="var(--text-muted)" font-size="9" font-family="'SF Mono', monospace">${date.toLocaleDateString('en-US', { month: 'short' })}</text>`);
+      }
+    }
+  }
+
+  const svgWidth = labelWidth + weeks * (cellSize + cellGap);
+  const svgHeight = 16 + 7 * (cellSize + cellGap) + 4;
+
+  // Day labels
+  const dayLabelSvg = dayLabels.map((label, i) => {
+    if (!label) return '';
+    const y = 16 + i * (cellSize + cellGap) + cellSize - 3;
+    return `<text x="0" y="${y}" fill="var(--text-muted)" font-size="9" font-family="'SF Mono', monospace">${label}</text>`;
+  }).join('');
+
+  return `<div class="heatmap-grid">
+    <svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" style="display: block;">
+      ${monthLabels.join('')}
+      ${dayLabelSvg}
+      ${rects.join('')}
+    </svg>
+  </div>`;
+}
+
+// ── Live Activity Ticker ────────────────────────────────────────────
+let prevTickerState = null;
+let tickerEvents = [];
+const MAX_TICKER_EVENTS = 20;
+
+// Diff state and accumulate new ticker events (no DOM work)
+function updateTickerEvents() {
+  const sessions = state.sessions || [];
+  const teams = state.teams || {};
+
+  if (prevTickerState) {
+    const prevIds = new Set(prevTickerState.sessions.map(s => s.sessionId));
+    const prevActive = new Set(prevTickerState.sessions.filter(s => s.isActive).map(s => s.sessionId));
+    const prevTeams = new Set(Object.keys(prevTickerState.teams || {}));
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    for (const s of sessions) {
+      if (!prevIds.has(s.sessionId)) {
+        tickerEvents.push({ icon: '&#x1f680;', text: `New session started`, time: now });
+      } else if (s.isActive && !prevActive.has(s.sessionId)) {
+        tickerEvents.push({ icon: '&#x26a1;', text: `Session became active`, time: now });
+      } else if (!s.isActive && prevActive.has(s.sessionId)) {
+        tickerEvents.push({ icon: '&#x23f8;', text: `Session went idle`, time: now });
+      }
+    }
+
+    for (const name of Object.keys(teams)) {
+      if (!prevTeams.has(name)) {
+        tickerEvents.push({ icon: '&#x1f41d;', text: `Swarm "${name}" started`, time: now });
+      }
+    }
+
+    for (const [name, team] of Object.entries(teams)) {
+      const prevTeam = prevTickerState.teams[name];
+      if (prevTeam) {
+        for (const task of (team.tasks || [])) {
+          const prevTask = (prevTeam.tasks || []).find(t => t.id === task.id);
+          if (prevTask && prevTask.status !== 'completed' && task.status === 'completed') {
+            tickerEvents.push({ icon: '&#x2705;', text: `Task #${task.id} completed`, time: now });
+          }
+        }
+      }
+    }
+  }
+
+  if (tickerEvents.length > MAX_TICKER_EVENTS) {
+    tickerEvents = tickerEvents.slice(-MAX_TICKER_EVENTS);
+  }
+
+  prevTickerState = { sessions: sessions.map(s => ({ sessionId: s.sessionId, isActive: s.isActive })), teams: JSON.parse(JSON.stringify(teams)) };
+}
+
+function renderTicker() {
+  const sessions = state.sessions || [];
+
+  // Run diffing to capture events
+  updateTickerEvents();
+
+  // If no events yet, generate from recent session modifications
+  if (tickerEvents.length === 0) {
+    const recentSessions = sessions.slice(0, 10);
+    for (const s of recentSessions) {
+      const time = s.modified ? new Date(s.modified).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      const summary = (s.summary || 'Session').substring(0, 30);
+      if (s.isActive) {
+        tickerEvents.push({ icon: '&#x26a1;', text: `${summary} (active)`, time });
+      } else {
+        tickerEvents.push({ icon: '&#x1f4ac;', text: `${summary} — ${s.messageCount} msgs`, time });
+      }
+    }
+  }
+
+  if (tickerEvents.length === 0) return '';
+
+  // Duplicate events for seamless loop
+  const items = tickerEvents.map(e =>
+    `<div class="ticker-item"><span class="ticker-icon">${e.icon}</span> ${escHtml(e.text)} <span class="ticker-time">${e.time}</span></div>`
+  ).join('');
+
+  return `<div class="ticker-container">
+    <div class="ticker-track">${items}${items}</div>
+  </div>`;
+}
+
+// ── Tool Usage Chart ────────────────────────────────────────────────
+let toolStatsData = null;
+let toolStatsFetching = false;
+
+async function fetchToolStats() {
+  if (toolStatsFetching) return;
+  toolStatsFetching = true;
+  try {
+    const res = await fetch('/api/tool-stats?days=7');
+    toolStatsData = await res.json();
+    // Re-render tool chart if on home
+    if (Router.currentView === 'home') {
+      const el = document.getElementById('tool-chart-area');
+      if (el) el.innerHTML = buildToolChart();
+    }
+  } catch {}
+  toolStatsFetching = false;
+}
+
+function buildToolChart() {
+  if (!toolStatsData || !toolStatsData.tools || toolStatsData.tools.length === 0) {
+    return '<div class="text-xs" style="color: var(--text-muted); padding: 8px;">No tool data available</div>';
+  }
+
+  const tools = toolStatsData.tools.slice(0, 10);
+  const maxCount = tools[0].count;
+
+  return tools.map(t => {
+    const pct = Math.max(2, (t.count / maxCount) * 100);
+    return `<div class="tool-bar-row">
+      <div class="tool-bar-label" title="${escHtml(t.name)}">${escHtml(t.name)}</div>
+      <div class="tool-bar-track"><div class="tool-bar-fill" style="width: ${pct}%;"></div></div>
+      <div class="tool-bar-count">${t.count.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderToolChart() {
+  if (!toolStatsData) fetchToolStats();
+  return `<div class="tool-chart">
+    <div class="home-section-title" style="margin-bottom: 10px;">Tool Usage (7 days)</div>
+    <div id="tool-chart-area">${buildToolChart()}</div>
+  </div>`;
+}
+
+// ── Session Sparklines ──────────────────────────────────────────────
+const sparklineCache = {};
+
+function renderSparklinePlaceholder(sessionId, isActive) {
+  // Trigger async fetch if not cached
+  if (!sparklineCache[sessionId] && !sparklineCache[sessionId + '_loading']) {
+    sparklineCache[sessionId + '_loading'] = true;
+    fetch(`/api/session-activity/${sessionId}`)
+      .then(r => r.json())
+      .then(data => {
+        sparklineCache[sessionId] = data.timestamps || [];
+        delete sparklineCache[sessionId + '_loading'];
+        // Update the sparkline in-place if it exists
+        const el = document.getElementById('spark-' + sessionId);
+        if (el) el.innerHTML = buildSparklineSvg(sparklineCache[sessionId], isActive);
+      })
+      .catch(() => { delete sparklineCache[sessionId + '_loading']; });
+  }
+
+  const timestamps = sparklineCache[sessionId];
+  if (!timestamps) {
+    return `<div class="sparkline-container" id="spark-${sessionId}"><svg viewBox="0 0 200 30"><line x1="0" y1="15" x2="200" y2="15" stroke="rgba(255,255,255,0.06)" stroke-width="1"/></svg></div>`;
+  }
+
+  return `<div class="sparkline-container" id="spark-${sessionId}">${buildSparklineSvg(timestamps, isActive)}</div>`;
+}
+
+function buildSparklineSvg(timestamps, isActive) {
+  if (!timestamps || timestamps.length < 2) {
+    return '<svg viewBox="0 0 200 30"><line x1="0" y1="15" x2="200" y2="15" stroke="rgba(255,255,255,0.06)" stroke-width="1"/></svg>';
+  }
+
+  // Bucket timestamps into ~20 bins showing message density over time
+  const minT = timestamps[0];
+  const maxT = timestamps[timestamps.length - 1];
+  const range = maxT - minT || 1;
+  const numBins = 20;
+  const bins = new Array(numBins).fill(0);
+
+  for (const t of timestamps) {
+    const bin = Math.min(numBins - 1, Math.floor(((t - minT) / range) * numBins));
+    bins[bin]++;
+  }
+
+  const maxBin = Math.max(1, ...bins);
+  const w = 200;
+  const h = 30;
+  const padding = 3;
+
+  const points = bins.map((v, i) => {
+    const x = (i / (numBins - 1)) * (w - padding * 2) + padding;
+    const y = h - padding - (v / maxBin) * (h - padding * 2);
+    return `${x},${y}`;
+  }).join(' ');
+
+  const lastX = w - padding;
+  const lastY = h - padding - (bins[numBins - 1] / maxBin) * (h - padding * 2);
+
+  let dot = '';
+  if (isActive) {
+    dot = `<circle cx="${lastX}" cy="${lastY}" r="2.5" fill="var(--green)" class="spark-pulse"/>`;
+  }
+
+  return `<svg viewBox="0 0 ${w} ${h}">
+    <polyline points="${points}" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+    ${dot}
+  </svg>`;
+}
+
+// ── Swarm Health Ring ───────────────────────────────────────────────
+function renderHealthRing(completed, total) {
+  if (total === 0) return '';
+  const pct = Math.round((completed / total) * 100);
+  const r = 14;
+  const circumference = 2 * Math.PI * r;
+  const dashLen = (pct / 100) * circumference;
+  const color = pct >= 75 ? 'var(--green)' : pct >= 25 ? 'var(--amber)' : 'var(--red)';
+
+  return `<div class="health-ring-container">
+    <svg viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="${r}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3"/>
+      <circle cx="18" cy="18" r="${r}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round"
+        stroke-dasharray="${dashLen} ${circumference - dashLen}"/>
+    </svg>
+    <div class="health-ring-label">${pct}%</div>
+  </div>`;
+}
+
 // ── Home Screen ────────────────────────────────────────────────────
 function renderHome() {
   const container = document.getElementById('home-content');
+
+  // Always update counter animation targets (cheap, no DOM rebuild)
+  updateBannerTargets();
+
+  // Compute fingerprint — skip full rebuild if nothing meaningful changed
+  const fp = getHomeFingerprint();
+  if (fp === homeStateFingerprint && container.children.length > 0) {
+    // State unchanged — update ticker events in-place (no DOM rebuild)
+    updateTickerEvents();
+    return;
+  }
+  homeStateFingerprint = fp;
+
   const teams = state.teams || {};
   const sessions = state.sessions || [];
   const history = state.history || [];
@@ -1054,6 +1957,21 @@ function renderHome() {
   const recentSessions = sessions.filter(s => !s.isActive).slice(0, 12);
 
   let html = '';
+
+  // Stats Banner
+  html += renderStatsBanner();
+
+  // Heatmap + Ticker row
+  html += '<div class="viz-row">';
+  html += `<div>
+    <div class="home-section-title">Activity (8 weeks)</div>
+    ${renderHeatmap()}
+  </div>`;
+  html += `<div>
+    <div class="home-section-title">Live Activity</div>
+    ${renderTicker()}
+  </div>`;
+  html += '</div>';
 
   // Active Now section
   const hasActive = teamNames.length > 0 || activeSessions.length > 0;
@@ -1069,7 +1987,8 @@ function renderHome() {
       const completed = tasks.filter(t => t.status === 'completed').length;
       const desc = (team.config && team.config.description) || '';
 
-      html += `<div class="home-card active-card" onclick="Router.navigate('/swarm/${encodeURIComponent(name)}')">
+      html += `<div class="home-card active-card" onclick="Router.navigate('/swarm/${encodeURIComponent(name)}')" style="position: relative;">
+        ${renderHealthRing(completed, tasks.length)}
         <div class="flex items-center justify-between">
           <span class="card-type-badge swarm">Swarm</span>
           <span class="active-dot"></span>
@@ -1101,13 +2020,18 @@ function renderHome() {
     html += '</div>';
   }
 
+  // Tool Usage Chart
+  html += renderToolChart();
+
   // Archived Swarms section
   if (history.length > 0) {
     html += '<div class="home-section-title">Archived Swarms</div>';
     html += '<div class="home-card-grid">';
     for (const h of history) {
       const d = h.archivedAt ? new Date(h.archivedAt).toLocaleDateString() : '';
-      html += `<div class="home-card" onclick="Router.navigate('/archive/${encodeURIComponent(h.file)}')">
+
+      html += `<div class="home-card" onclick="Router.navigate('/archive/${encodeURIComponent(h.file)}')" style="position: relative;">
+        ${renderHealthRing(h.taskCount > 0 ? h.taskCount : 0, h.taskCount || 1)}
         <div class="flex items-center justify-between">
           <span class="card-type-badge swarm">Swarm</span>
           <span class="text-xs font-mono" style="color: var(--text-muted);">${d}</span>
@@ -1140,11 +2064,37 @@ function renderSessionCard(s, isActive) {
   const title = s.summary || s.firstPrompt || 'Untitled session';
   const modified = s.modified ? timeAgo(new Date(s.modified)) : '';
   const projName = s.projectPath ? s.projectPath.split('/').filter(Boolean).pop() : '';
+  const status = s.status || (isActive ? 'idle' : 'inactive');
 
-  return `<div class="home-card ${isActive ? 'active-card' : ''}" onclick="Router.navigate('/session/${s.sessionId}')">
+  // Card class: thinking > idle > inactive
+  let cardClass = 'home-card';
+  if (status === 'thinking') cardClass += ' thinking-card';
+  else if (status === 'idle') cardClass += ' idle-card';
+
+  // Badge + indicator
+  let badgeClass, badgeLabel, indicator;
+  if (status === 'thinking') {
+    badgeClass = 'thinking';
+    badgeLabel = 'Thinking';
+    indicator = '<span class="thinking-dot"></span>';
+  } else if (status === 'idle') {
+    badgeClass = 'idle-open';
+    badgeLabel = 'Open';
+    indicator = '<span class="idle-dot"></span>';
+  } else if (isActive) {
+    badgeClass = 'active';
+    badgeLabel = 'Live';
+    indicator = '<span class="active-dot"></span>';
+  } else {
+    badgeClass = 'session';
+    badgeLabel = 'Session';
+    indicator = `<span class="text-xs font-mono" style="color: var(--text-muted);">${modified}</span>`;
+  }
+
+  return `<div class="${cardClass}" onclick="Router.navigate('/session/${s.sessionId}')">
     <div class="flex items-center justify-between">
-      <span class="card-type-badge ${isActive ? 'active' : 'session'}">${isActive ? 'Live' : 'Session'}</span>
-      ${isActive ? '<span class="active-dot"></span>' : `<span class="text-xs font-mono" style="color: var(--text-muted);">${modified}</span>`}
+      <span class="card-type-badge ${badgeClass}">${badgeLabel}</span>
+      ${indicator}
     </div>
     <div class="card-title">${escHtml(title)}</div>
     <div class="card-meta">
@@ -1152,6 +2102,7 @@ function renderSessionCard(s, isActive) {
       ${projName ? `<span>&#x1f4c1; ${escHtml(projName)}</span>` : ''}
       ${s.gitBranch ? `<span>&#x1f33f; ${escHtml(s.gitBranch)}</span>` : ''}
     </div>
+    ${renderSparklinePlaceholder(s.sessionId, isActive)}
   </div>`;
 }
 
@@ -1180,8 +2131,18 @@ async function loadSessionDetail(sessionId) {
 
     titleEl.textContent = data.session.summary || data.session.firstPrompt || 'Session';
 
-    renderSessionSidebar(data.session);
-    renderSessionTranscript(data.entries);
+    renderSessionSidebar(data.session, data.stats);
+    renderSessionTranscript(data.entries, data.session);
+
+    // Also fetch sparkline data for sidebar
+    fetch(`/api/session-activity/${sessionId}`)
+      .then(r => r.json())
+      .then(d => {
+        const el = document.getElementById('sidebar-sparkline');
+        if (el && d.timestamps && d.timestamps.length >= 2) {
+          el.innerHTML = buildSparklineSvg(d.timestamps, data.session.status === 'thinking');
+        }
+      }).catch(() => {});
 
     // Subscribe to live updates
     Router._prevSessionId = sessionId;
@@ -1193,23 +2154,89 @@ async function loadSessionDetail(sessionId) {
   }
 }
 
-function renderSessionSidebar(session) {
+function renderSessionSidebar(session, stats) {
   const sidebar = document.getElementById('session-sidebar');
   const created = session.created ? new Date(session.created).toLocaleString() : 'Unknown';
   const modified = session.modified ? new Date(session.modified).toLocaleString() : 'Unknown';
   const projName = session.projectPath || '';
+  stats = stats || {};
+
+  // Duration
+  let durationStr = '';
+  if (session.created && session.modified) {
+    const dur = new Date(session.modified) - new Date(session.created);
+    if (dur > 0) {
+      const mins = Math.floor(dur / 60000);
+      const hrs = Math.floor(mins / 60);
+      if (hrs > 0) durationStr = `${hrs}h ${mins % 60}m`;
+      else durationStr = `${mins}m`;
+    }
+  }
+
+  // Status display
+  let statusHtml;
+  if (session.status === 'thinking') {
+    statusHtml = `<span class="session-status-live"><span class="status-pulse" style="background: var(--green);"></span> <span style="color: var(--green); font-weight: 600;">Thinking</span></span>`;
+  } else if (session.status === 'idle') {
+    statusHtml = `<span class="session-status-live"><span style="width:8px; height:8px; border-radius:50%; background: var(--amber); opacity: 0.7;"></span> <span style="color: var(--amber);">Open</span></span>`;
+  } else if (session.isActive) {
+    statusHtml = `<span class="session-status-live"><span class="status-pulse" style="background: var(--green);"></span> <span style="color: var(--green);">Active</span></span>`;
+  } else {
+    statusHtml = '<span style="color: var(--text-muted);">&#x25CB; Ended</span>';
+  }
+
+  // Tool stats
+  const tools = (stats.tools || []).slice(0, 8);
+  const maxToolCount = tools.length > 0 ? tools[0].count : 1;
+  const totalToolCalls = tools.reduce((s, t) => s + t.count, 0);
+  let toolsHtml = '';
+  if (tools.length > 0) {
+    toolsHtml = `<div class="meta-group">
+      <div class="meta-label">Tool Usage</div>
+      <div class="sidebar-tool-list">
+        ${tools.map(t => `<div class="sidebar-tool-row">
+          <span class="tool-name-label">${escHtml(t.name)}</span>
+          <span class="tool-count-label">${t.count}</span>
+        </div>
+        <div class="sidebar-mini-bar"><div class="sidebar-mini-bar-fill" style="width: ${(t.count / maxToolCount * 100)}%;"></div></div>`).join('')}
+      </div>
+    </div>`;
+  }
 
   sidebar.innerHTML = `
     <div class="meta-group">
       <div class="meta-label">Status</div>
-      <div class="meta-value">${session.isActive
-        ? '<span style="color: var(--green);">&#x25CF; Active</span>'
-        : '<span style="color: var(--text-muted);">&#x25CB; Ended</span>'}</div>
+      <div class="meta-value" id="session-status-display">${statusHtml}</div>
     </div>
+
+    <div class="sidebar-stat-grid">
+      <div class="sidebar-stat-box">
+        <div class="stat-number" style="color: var(--blue);">${stats.userCount || 0}</div>
+        <div class="stat-label">Prompts</div>
+      </div>
+      <div class="sidebar-stat-box">
+        <div class="stat-number" style="color: var(--cyan);">${stats.assistantCount || 0}</div>
+        <div class="stat-label">Responses</div>
+      </div>
+      <div class="sidebar-stat-box">
+        <div class="stat-number" style="color: var(--purple);">${totalToolCalls}</div>
+        <div class="stat-label">Tool Calls</div>
+      </div>
+      <div class="sidebar-stat-box">
+        <div class="stat-number" style="color: var(--text-primary);">${durationStr || '-'}</div>
+        <div class="stat-label">Duration</div>
+      </div>
+    </div>
+
     <div class="meta-group">
-      <div class="meta-label">Messages</div>
-      <div class="meta-value font-mono">${session.messageCount || 0}</div>
+      <div class="meta-label">Activity</div>
+      <div class="sidebar-sparkline" id="sidebar-sparkline">
+        <svg viewBox="0 0 200 30"><line x1="0" y1="15" x2="200" y2="15" stroke="rgba(255,255,255,0.06)" stroke-width="1"/></svg>
+      </div>
     </div>
+
+    ${toolsHtml}
+
     <div class="meta-group">
       <div class="meta-label">Project</div>
       <div class="meta-value font-mono" style="font-size: 11px;">${escHtml(projName)}</div>
@@ -1233,9 +2260,29 @@ function renderSessionSidebar(session) {
   `;
 }
 
-function renderSessionTranscript(entries) {
+function renderSessionTranscript(entries, session) {
   const container = document.getElementById('session-transcript');
-  container.innerHTML = entries.map(renderSessionEntry).join('');
+  const isThinking = session && session.status === 'thinking';
+
+  if (entries.length === 0 && !isThinking) {
+    container.innerHTML = `<div class="session-empty-state">
+      <div class="empty-icon">&#x1f4dc;</div>
+      <div class="empty-text">No transcript entries found for this session.</div>
+    </div>`;
+    return;
+  }
+
+  let html = entries.map(renderSessionEntry).join('');
+
+  // Add thinking indicator at the bottom for active sessions
+  if (isThinking) {
+    html += `<div class="thinking-indicator">
+      <div class="thinking-dots"><span></span><span></span><span></span></div>
+      <div class="thinking-label">Claude is thinking...</div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
   container.scrollTop = container.scrollHeight;
 }
 
@@ -1287,9 +2334,28 @@ function appendSessionEntries(entries) {
   if (Router.currentView !== 'session-detail') return;
   const container = document.getElementById('session-transcript');
   if (!container) return;
+
+  // Remove thinking indicator if present (new content arrived)
+  const thinkEl = container.querySelector('.thinking-indicator');
+  if (thinkEl) thinkEl.remove();
+
+  // Remove empty state if present
+  const emptyEl = container.querySelector('.session-empty-state');
+  if (emptyEl) emptyEl.remove();
+
   const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
   const html = entries.map(renderSessionEntry).join('');
   container.insertAdjacentHTML('beforeend', html);
+
+  // Re-add thinking indicator (session is still active and receiving updates)
+  const session = sessionDetailData ? sessionDetailData.session : null;
+  if (session && session.status === 'thinking') {
+    container.insertAdjacentHTML('beforeend', `<div class="thinking-indicator">
+      <div class="thinking-dots"><span></span><span></span><span></span></div>
+      <div class="thinking-label">Claude is thinking...</div>
+    </div>`);
+  }
+
   if (wasAtBottom) container.scrollTop = container.scrollHeight;
 
   // Update session data
@@ -1680,6 +2746,38 @@ function connect() {
       lastUpdateTime = Date.now();
       triggerPing();
       render();
+
+      // Update session detail status in-place if viewing one
+      if (Router.currentView === 'session-detail' && sessionDetailData) {
+        const sid = sessionDetailData.session.sessionId;
+        const updated = (state.sessions || []).find(s => s.sessionId === sid);
+        if (updated && updated.status !== sessionDetailData.session.status) {
+          sessionDetailData.session.status = updated.status;
+          sessionDetailData.session.isActive = updated.isActive;
+          // Update status display
+          const statusEl = document.getElementById('session-status-display');
+          if (statusEl) {
+            if (updated.status === 'thinking') {
+              statusEl.innerHTML = '<span class="session-status-live"><span class="status-pulse" style="background: var(--green);"></span> <span style="color: var(--green); font-weight: 600;">Thinking</span></span>';
+            } else if (updated.status === 'idle') {
+              statusEl.innerHTML = '<span class="session-status-live"><span style="width:8px; height:8px; border-radius:50%; background: var(--amber); opacity: 0.7;"></span> <span style="color: var(--amber);">Open</span></span>';
+            } else {
+              statusEl.innerHTML = '<span style="color: var(--text-muted);">&#x25CB; Ended</span>';
+            }
+          }
+          // Add/remove thinking indicator from transcript
+          const container = document.getElementById('session-transcript');
+          if (container) {
+            const thinkEl = container.querySelector('.thinking-indicator');
+            if (updated.status === 'thinking' && !thinkEl) {
+              container.insertAdjacentHTML('beforeend', '<div class="thinking-indicator"><div class="thinking-dots"><span></span><span></span><span></span></div><div class="thinking-label">Claude is thinking...</div></div>');
+              container.scrollTop = container.scrollHeight;
+            } else if (updated.status !== 'thinking' && thinkEl) {
+              thinkEl.remove();
+            }
+          }
+        }
+      }
     } catch {}
   };
 

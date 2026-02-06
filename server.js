@@ -107,6 +107,8 @@ function loadHistory() {
 
 // ── Session scanning ──────────────────────────────────────────────
 const ACTIVE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+const THINKING_THRESHOLD_MS = 15 * 1000; // 15 seconds — JSONL written to recently
+const recentJsonlWrites = new Map(); // jsonlPath → timestamp of last observed write
 
 // Patterns that indicate a non-informative user message
 const SKIP_PROMPTS = /^\[Request interrupted|^\s*$/;
@@ -227,6 +229,15 @@ function scanSessions() {
           if (fs.existsSync(lockPath)) isActive = true;
         } catch {}
 
+        // Derive status: thinking (actively being written), idle (open but quiet), inactive
+        let status = "inactive";
+        if (isActive) {
+          const lastWrite = recentJsonlWrites.get(jsonlPath);
+          const mtimeRecent = fileMtime && (Date.now() - fileMtime < THINKING_THRESHOLD_MS);
+          const writeRecent = lastWrite && (Date.now() - lastWrite < THINKING_THRESHOLD_MS);
+          status = (mtimeRecent || writeRecent) ? "thinking" : "idle";
+        }
+
         // Use index data if available, otherwise extract from JSONL
         const indexed = indexedEntries.get(sessionId);
         if (indexed) {
@@ -243,6 +254,7 @@ function scanSessions() {
             projectPath: indexed.projectPath || (index && index.originalPath) || "",
             gitBranch: indexed.gitBranch || "",
             isActive,
+            status,
             jsonlPath,
           });
         } else {
@@ -260,6 +272,7 @@ function scanSessions() {
             projectPath: meta.projectPath || (index && index.originalPath) || "",
             gitBranch: meta.gitBranch || "",
             isActive,
+            status,
             jsonlPath,
           });
         }
@@ -340,15 +353,16 @@ function readSessionTail(jsonlPath, tail) {
   try {
     const raw = fs.readFileSync(jsonlPath, "utf-8");
     const lines = raw.split("\n").filter((l) => l.trim());
-    const slice = tail ? lines.slice(-tail) : lines;
+    // Walk backwards to collect `tail` *parsed* entries (not raw lines)
     const entries = [];
-    for (const line of slice) {
+    for (let i = lines.length - 1; i >= 0 && entries.length < tail; i--) {
       try {
-        const obj = JSON.parse(line);
+        const obj = JSON.parse(lines[i]);
         const entry = parseSessionEntry(obj);
         if (entry) entries.push(entry);
       } catch {}
     }
+    entries.reverse();
     return entries;
   } catch {
     return [];
@@ -444,13 +458,24 @@ function startWatcher() {
     });
 
     projWatcher.on("all", (event, filePath) => {
-      if (filePath.endsWith(".jsonl") || filePath.endsWith("sessions-index.json")) {
+      if (filePath.endsWith(".jsonl")) {
+        recentJsonlWrites.set(filePath, Date.now());
+        debouncedJsonlBroadcast();
+      } else if (filePath.endsWith("sessions-index.json")) {
         debouncedJsonlBroadcast();
       }
     });
 
     console.log(`👁  Watching sessions: ${PROJECTS_DIR}`);
   }
+
+  // Periodically clean stale entries from recentJsonlWrites
+  setInterval(() => {
+    const cutoff = Date.now() - THINKING_THRESHOLD_MS * 2;
+    for (const [p, ts] of recentJsonlWrites) {
+      if (ts < cutoff) recentJsonlWrites.delete(p);
+    }
+  }, 10000);
 }
 
 // ── Markdown export ─────────────────────────────────────────────────
@@ -508,6 +533,91 @@ function generateMarkdownReport(team) {
   return md;
 }
 
+// ── Tool stats endpoint (cached) ────────────────────────────────
+let toolStatsCache = { data: null, expires: 0 };
+
+app.get("/api/tool-stats", (req, res) => {
+  const days = parseInt(req.query.days) || 7;
+  const now = Date.now();
+
+  if (toolStatsCache.data && toolStatsCache.expires > now) {
+    return res.json(toolStatsCache.data);
+  }
+
+  const cutoff = now - days * 86400000;
+  const toolCounts = {};
+  let totalSessions = 0;
+
+  if (fs.existsSync(PROJECTS_DIR)) {
+    try {
+      for (const projDir of fs.readdirSync(PROJECTS_DIR)) {
+        const projPath = path.join(PROJECTS_DIR, projDir);
+        try { if (!fs.statSync(projPath).isDirectory()) continue; } catch { continue; }
+        let jsonlFiles;
+        try { jsonlFiles = fs.readdirSync(projPath).filter(f => f.endsWith(".jsonl")); } catch { continue; }
+
+        for (const file of jsonlFiles) {
+          const filePath = path.join(projPath, file);
+          try {
+            const stat = fs.statSync(filePath);
+            if (stat.mtimeMs < cutoff) continue;
+          } catch { continue; }
+
+          totalSessions++;
+          try {
+            const raw = fs.readFileSync(filePath, "utf-8");
+            for (const line of raw.split("\n")) {
+              if (!line.trim()) continue;
+              try {
+                const obj = JSON.parse(line);
+                if (obj.type === "assistant" && obj.message && Array.isArray(obj.message.content)) {
+                  for (const block of obj.message.content) {
+                    if (block.type === "tool_use" && block.name) {
+                      toolCounts[block.name] = (toolCounts[block.name] || 0) + 1;
+                    }
+                  }
+                }
+              } catch {}
+            }
+          } catch {}
+        }
+      }
+    } catch {}
+  }
+
+  const tools = Object.entries(toolCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 15);
+
+  const result = { tools, totalSessions };
+  toolStatsCache = { data: result, expires: now + 60000 };
+  res.json(result);
+});
+
+// ── Session activity endpoint ───────────────────────────────────
+app.get("/api/session-activity/:id", (req, res) => {
+  const sessionId = req.params.id;
+  const session = (state.sessions || []).find(s => s.sessionId === sessionId);
+  if (!session) return res.status(404).json({ error: "Session not found" });
+
+  const timestamps = [];
+  try {
+    const raw = fs.readFileSync(session.jsonlPath, "utf-8");
+    for (const line of raw.split("\n")) {
+      if (!line.trim()) continue;
+      try {
+        const obj = JSON.parse(line);
+        if ((obj.type === "user" || obj.type === "assistant") && obj.timestamp) {
+          timestamps.push(new Date(obj.timestamp).getTime());
+        }
+      } catch {}
+    }
+  } catch {}
+
+  res.json({ timestamps });
+});
+
 // ── Routes ─────────────────────────────────────────────────────────
 app.use("/features", express.static(path.join(__dirname, "features")));
 
@@ -545,7 +655,36 @@ app.get("/api/session/:id", (req, res) => {
   if (!session) return res.status(404).json({ error: "Session not found" });
 
   const entries = readSessionTail(session.jsonlPath, tail);
-  res.json({ session, entries });
+
+  // Gather tool usage stats from the full file
+  const toolCounts = {};
+  let userCount = 0, assistantCount = 0;
+  try {
+    const raw = fs.readFileSync(session.jsonlPath, "utf-8");
+    for (const line of raw.split("\n")) {
+      if (!line.trim()) continue;
+      try {
+        const obj = JSON.parse(line);
+        if (obj.type === "user") userCount++;
+        if (obj.type === "assistant") {
+          assistantCount++;
+          if (obj.message && Array.isArray(obj.message.content)) {
+            for (const block of obj.message.content) {
+              if (block.type === "tool_use" && block.name) {
+                toolCounts[block.name] = (toolCounts[block.name] || 0) + 1;
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+  } catch {}
+
+  const tools = Object.entries(toolCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+
+  res.json({ session, entries, stats: { userCount, assistantCount, tools } });
 });
 
 // ── WebSocket ──────────────────────────────────────────────────────
@@ -641,9 +780,40 @@ wss.on("connection", (ws) => {
   });
 });
 
+// ── Periodic status poll ─────────────────────────────────────────
+// Chokidar's awaitWriteFinish delays events while a file is being
+// actively written (i.e. Claude is thinking).  This lightweight poll
+// stats active sessions every few seconds so "thinking" vs "idle"
+// status transitions aren't blocked by that delay.
+function pollSessionStatus() {
+  const sessions = state.sessions || [];
+  let changed = false;
+
+  for (const session of sessions) {
+    if (!session.isActive) continue;
+    try {
+      const stat = fs.statSync(session.jsonlPath);
+      const lastWrite = recentJsonlWrites.get(session.jsonlPath);
+      const mtimeRecent = (Date.now() - stat.mtimeMs) < THINKING_THRESHOLD_MS;
+      const writeRecent = lastWrite && (Date.now() - lastWrite) < THINKING_THRESHOLD_MS;
+      const newStatus = (mtimeRecent || writeRecent) ? "thinking" : "idle";
+      if (session.status !== newStatus) {
+        session.status = newStatus;
+        changed = true;
+      }
+    } catch {}
+  }
+
+  if (changed) {
+    state = { ...state, timestamp: Date.now() };
+    broadcast();
+  }
+}
+
 // ── Start ──────────────────────────────────────────────────────────
 scanAll();
 startWatcher();
+setInterval(pollSessionStatus, 3000);
 
 server.listen(PORT, () => {
   const teamCount = Object.keys(state.teams).length;
