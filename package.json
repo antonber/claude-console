@@ -1,0 +1,16 @@
+{
+  "name": "claude-console",
+  "version": "1.0.0",
+  "description": "Real-time dashboard for Claude Code sessions and swarm agents",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["claude", "claude-code", "dashboard", "swarm", "agents"],
+  "license": "MIT",
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}

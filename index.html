@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Console</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0b0d17;
+    --bg-card: #111827;
+    --bg-card-hover: #1a2235;
+    --border-subtle: rgba(255,255,255,0.06);
+    --border-glow: rgba(255,255,255,0.12);
+    --text-primary: #e5e7eb;
+    --text-muted: #6b7280;
+    --green: #34d399;
+    --cyan: #22d3ee;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --purple: #a78bfa;
+    --blue: #60a5fa;
+    --yellow: #fbbf24;
+    --pink: #f472b6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-deep);
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(34,211,238,0.03) 0%, transparent 50%),
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 40px 40px, 40px 40px;
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+  }
+
+  .font-mono { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+  /* Animations */
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 8px var(--glow-color, rgba(34,211,238,0.3)); }
+    50% { box-shadow: 0 0 20px var(--glow-color, rgba(34,211,238,0.5)); }
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes pulse-fast {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes count-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes ping-ring {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(3); opacity: 0; }
+  }
+
+  @keyframes scan-line {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200vw); }
+  }
+
+  @keyframes border-pulse {
+    0%, 100% { border-color: rgba(34,211,238,0.2); }
+    50% { border-color: rgba(34,211,238,0.5); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  @keyframes typing-dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+  }
+
+  .animate-fade-in { animation: fade-in 0.3s ease-out; }
+  .animate-count-pop { animation: count-pop 0.3s ease-out; }
+
+  /* Ping ring on heartbeat */
+  .ping-ring {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: ping-ring 0.8s ease-out forwards;
+    pointer-events: none;
+  }
+
+  /* Typing dots for active agents */
+  .typing-dots::after {
+    content: '';
+    animation: typing-dots 1.5s steps(1, end) infinite;
+  }
+
+  /* Header scan line */
+  .scan-line {
+    position: absolute;
+    top: 0; left: 0;
+    width: 120px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(34,211,238,0.04), transparent);
+    animation: scan-line 8s linear infinite;
+    pointer-events: none;
+  }
+
+  /* Agent card */
+  .agent-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 14px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .agent-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--agent-color, var(--cyan));
+    border-radius: 3px 0 0 3px;
+  }
+
+  .agent-card.active, .agent-card.working {
+    border-color: var(--agent-color, var(--cyan));
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .agent-card.idle {
+    opacity: 0.7;
+  }
+
+  .agent-card.idle:hover { opacity: 0.9; }
+
+  .agent-card.shutdown {
+    opacity: 0.35;
+    filter: grayscale(0.6);
+  }
+
+  /* Status dot */
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .status-dot.active { background: var(--agent-color, var(--cyan)); animation: pulse-fast 1s infinite; }
+  .status-dot.idle { background: var(--agent-color, var(--cyan)); animation: pulse-slow 3s infinite; opacity: 0.6; }
+  .status-dot.working { background: var(--agent-color, var(--cyan)); animation: pulse-fast 1s infinite; }
+  .status-dot.shutdown { background: #4b5563; }
+  .status-dot.initializing { background: var(--agent-color, var(--cyan)); opacity: 0.3; }
+
+  /* Task card */
+  .task-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    animation: fade-in 0.3s ease-out;
+  }
+
+  .task-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-glow);
+    transform: translateY(-1px);
+  }
+
+  .task-card.status-in_progress {
+    border-color: rgba(34,211,238,0.25);
+    animation: border-pulse 3s ease-in-out infinite;
+  }
+
+  .task-card .description {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+
+  .task-card.expanded .description {
+    max-height: 400px;
+    padding-top: 10px;
+    overflow-y: auto;
+  }
+
+  /* Status badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .badge-completed { background: rgba(52,211,153,0.15); color: var(--green); }
+  .badge-in_progress {
+    background: linear-gradient(90deg, rgba(34,211,238,0.15), rgba(34,211,238,0.25), rgba(34,211,238,0.15));
+    background-size: 200% 100%;
+    animation: shimmer 2.5s linear infinite;
+    color: var(--cyan);
+  }
+  .badge-pending { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .badge-blocked { background: rgba(248,113,113,0.15); color: var(--red); }
+
+  /* Kanban column */
+  .kanban-col {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .kanban-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Feed message */
+  .feed-msg {
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    animation: fade-in 0.3s ease-out;
+    border-left: 3px solid var(--msg-color, var(--cyan));
+    background: rgba(17,24,39,0.6);
+  }
+
+  .feed-msg .timestamp {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* Stat counter */
+  .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    font-family: 'SF Mono', monospace;
+    transition: all 0.3s ease;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* SVG arrows layer */
+  .arrows-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Team selector */
+  .team-selector {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+  }
+  .team-selector:focus { border-color: var(--cyan); }
+
+  /* Layout */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: 1fr auto;
+    gap: 16px;
+    height: calc(100vh - 140px);
+  }
+
+  .sidebar { overflow-y: auto; }
+  .board { overflow-y: auto; }
+  .feed-panel { grid-column: 1 / -1; max-height: 220px; overflow-y: auto; }
+
+  /* Toggle */
+  .toggle-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .toggle-btn:hover, .toggle-btn.active { color: var(--text-primary); border-color: var(--cyan); }
+
+  /* Tabs */
+  .tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--text-primary); }
+  .tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+  .bottom-panel { max-height: 280px; overflow: hidden; }
+
+  /* Dep arrow badge on task card */
+  .dep-badge {
+    font-size: 10px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 4px;
+  }
+  .dep-badge svg { width: 12px; height: 12px; }
+
+  .no-teams {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    color: var(--text-muted);
+    text-align: center;
+    overflow: hidden;
+  }
+  .no-teams .orbit-ring {
+    position: absolute;
+    border: 1px solid rgba(34,211,238,0.06);
+    border-radius: 50%;
+    animation: orbit-spin 60s linear infinite;
+  }
+  .no-teams .orbit-ring:nth-child(1) { width: 300px; height: 300px; }
+  .no-teams .orbit-ring:nth-child(2) { width: 500px; height: 500px; animation-duration: 90s; animation-direction: reverse; }
+  .no-teams .orbit-ring:nth-child(3) { width: 700px; height: 700px; animation-duration: 120s; }
+  .no-teams .orbit-dot {
+    position: absolute; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--cyan); opacity: 0.4;
+  }
+  .no-teams .orbit-ring:nth-child(1) .orbit-dot { top: 0; left: 50%; transform: translate(-50%, -50%); }
+  .no-teams .orbit-ring:nth-child(2) .orbit-dot { bottom: 0; right: 0; transform: translate(50%, 50%); }
+  .no-teams .orbit-ring:nth-child(3) .orbit-dot { top: 50%; left: 0; transform: translate(-50%, -50%); }
+  @keyframes orbit-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .no-teams .empty-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
+  .no-teams .empty-icon {
+    width: 80px; height: 80px; margin: 0 auto 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34,211,238,0.08) 0%, transparent 70%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    animation: empty-pulse 4s ease-in-out infinite;
+  }
+  @keyframes empty-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.05); }
+    50% { box-shadow: 0 0 40px 20px rgba(34,211,238,0.08); }
+  }
+  .no-teams .empty-title {
+    font-size: 20px; font-weight: 700; color: var(--text-primary);
+    margin-bottom: 8px; letter-spacing: 0.02em;
+  }
+  .no-teams .empty-subtitle {
+    font-size: 13px; color: var(--text-muted); max-width: 560px;
+    line-height: 1.6; margin-bottom: 32px;
+  }
+  .no-teams .empty-hint-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    max-width: 480px; width: 100%;
+  }
+  .no-teams .empty-hint {
+    background: rgba(17,24,39,0.6);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px; padding: 14px 16px;
+    text-align: left; transition: all 0.3s;
+  }
+  .no-teams .empty-hint:hover {
+    border-color: rgba(34,211,238,0.2);
+    background: rgba(17,24,39,0.8);
+  }
+  .no-teams .empty-hint .hint-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--cyan); margin-bottom: 4px; font-weight: 600;
+  }
+  .no-teams .empty-hint .hint-text {
+    font-size: 12px; color: var(--text-secondary); line-height: 1.4;
+  }
+  .no-teams .empty-hint code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px; color: var(--cyan); background: rgba(34,211,238,0.08);
+    padding: 1px 5px; border-radius: 4px;
+  }
+
+  /* Completed tasks dimmed */
+  .task-card.status-completed { opacity: 0.65; }
+  .task-card.status-completed:hover { opacity: 0.9; }
+
+  /* Blocked tasks red tint */
+  .task-card.status-blocked { border-color: rgba(248,113,113,0.2); }
+
+  /* ── Home Screen ─────────────────────────────────────────────── */
+  .home-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .home-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .home-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    animation: fade-in 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .home-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
+  }
+
+  .home-card.active-card {
+    border-color: rgba(34,211,238,0.3);
+    animation: border-pulse 3s ease-in-out infinite;
+  }
+
+  .home-card .card-type-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  .card-type-badge.swarm {
+    background: rgba(167,139,250,0.15);
+    color: var(--purple);
+  }
+
+  .card-type-badge.session {
+    background: rgba(96,165,250,0.15);
+    color: var(--blue);
+  }
+
+  .card-type-badge.active {
+    background: rgba(34,211,238,0.15);
+    color: var(--cyan);
+  }
+
+  .home-card .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 8px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .home-card .card-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .home-card .card-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ── Session Detail View ─────────────────────────────────────── */
+  .session-layout {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 16px;
+    height: calc(100vh - 90px);
+  }
+
+  .session-transcript {
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  .session-sidebar {
+    overflow-y: auto;
+    border-left: 1px solid var(--border-subtle);
+    padding-left: 16px;
+  }
+
+  .session-sidebar .meta-group {
+    margin-bottom: 16px;
+  }
+
+  .session-sidebar .meta-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .session-sidebar .meta-value {
+    font-size: 13px;
+    color: var(--text-primary);
+    word-break: break-all;
+  }
+
+  .transcript-entry {
+    margin-bottom: 12px;
+    animation: fade-in 0.2s ease-out;
+  }
+
+  .transcript-entry.user-msg {
+    border-left: 3px solid var(--blue);
+    padding: 10px 14px;
+    background: rgba(96,165,250,0.05);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .transcript-entry.assistant-msg {
+    padding: 10px 14px;
+  }
+
+  .transcript-entry .entry-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .transcript-entry.user-msg .entry-label { color: var(--blue); }
+  .transcript-entry.assistant-msg .entry-label { color: var(--cyan); }
+
+  .transcript-entry .entry-text {
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .tool-call-card {
+    background: rgba(167,139,250,0.06);
+    border: 1px solid rgba(167,139,250,0.15);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tool-call-card .tool-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(167,139,250,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .tool-call-card .tool-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--purple);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  .tool-call-card .tool-detail {
+    font-size: 11px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 400px;
+  }
+
+  /* Back button */
+  .back-btn {
+    background: none;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: none;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .back-btn:hover { color: var(--text-primary); border-color: var(--cyan); }
+
+  /* Active indicator dot */
+  .active-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse-fast 1s infinite;
+    display: inline-block;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="flex items-center justify-between px-6 py-4 border-b" style="border-color: var(--border-subtle); position: relative; overflow: hidden;">
+  <div class="scan-line"></div>
+  <div class="flex items-center gap-3" style="position: relative; z-index: 1;">
+    <button id="back-btn" class="back-btn" onclick="Router.navigate('/')">&#8592; Back</button>
+    <div id="header-title" class="text-lg font-bold tracking-wide" style="color: var(--cyan); cursor: pointer;" onclick="Router.navigate('/')">CLAUDE CONSOLE</div>
+    <div style="position: relative; display: inline-flex; align-items: center;">
+      <div id="connection-status" class="status-dot" style="background: var(--green);" title="Connected"></div>
+      <div id="ping-indicator" style="position: absolute; top: 0; left: 0;"></div>
+    </div>
+  </div>
+  <div class="flex items-center gap-4" style="position: relative; z-index: 1;">
+    <div id="stats-bar" class="flex items-center gap-6"></div>
+    <select id="team-select" class="team-selector" style="display:none;"></select>
+    <button id="export-btn" class="toggle-btn" style="display:none;">Export</button>
+  </div>
+</header>
+
+<!-- Progress bar slot -->
+<div id="progress-bar-slot" style="padding: 0 24px;"></div>
+
+<!-- ═══ VIEW: Home ═══ -->
+<div id="view-home" class="px-6 py-4" style="display:none;">
+  <div id="home-content"></div>
+</div>
+
+<!-- ═══ VIEW: Swarm Detail ═══ -->
+<div id="view-swarm-detail" class="px-6 py-4" style="display:none;">
+  <div id="no-teams" class="no-teams" style="display:none;">
+    <div class="orbit-ring"><div class="orbit-dot"></div></div>
+    <div class="orbit-ring"><div class="orbit-dot"></div></div>
+    <div class="orbit-ring"><div class="orbit-dot"></div></div>
+    <div class="empty-content">
+      <div class="empty-icon">&#x1f6f0;&#xfe0f;</div>
+      <div class="empty-title">Awaiting Swarm</div>
+      <div class="empty-subtitle">
+        Mission Control is watching for Claude Code swarms. Launch one and it will appear here in real time.
+      </div>
+      <div class="empty-hint-grid">
+        <div class="empty-hint">
+          <div class="hint-label">Quick Start</div>
+          <div class="hint-text">Use <code>TeamCreate</code> in Claude Code to spawn a swarm</div>
+        </div>
+        <div class="empty-hint">
+          <div class="hint-label">Auto-Detect</div>
+          <div class="hint-text">New teams appear instantly &mdash; no reload needed</div>
+        </div>
+        <div class="empty-hint">
+          <div class="hint-label">Archives</div>
+          <div class="hint-text">Past swarms are saved and browsable from the dropdown</div>
+        </div>
+        <div class="empty-hint">
+          <div class="hint-label">Live Updates</div>
+          <div class="hint-text">Tasks, messages, and agent status stream via WebSocket</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="archive-banner" style="display:none; grid-column: 1 / -1; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); border-radius: 8px; padding: 8px 16px; font-size: 12px; color: var(--amber); display: none; align-items: center; gap: 8px;">
+    <span style="font-size: 14px;">&#x1f4e6;</span>
+    <span id="archive-label">Viewing archived swarm</span>
+    <button onclick="exitArchive()" style="margin-left: auto; background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.3); color: var(--amber); padding: 3px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;">Back to Live</button>
+  </div>
+
+  <div id="dashboard" class="main-grid" style="display:none;">
+    <!-- Sidebar: Agent Roster -->
+    <div class="sidebar">
+      <div class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--text-muted);">Agent Roster</div>
+      <div id="agent-roster" class="space-y-2"></div>
+    </div>
+
+    <!-- Task Board -->
+    <div class="board">
+      <div class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--text-muted);">Task Board</div>
+      <div id="task-board" class="flex gap-3" style="position: relative;"></div>
+    </div>
+
+    <!-- Bottom tabbed panel -->
+    <div class="bottom-panel" style="grid-column: 1 / -1;">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-1">
+          <button class="tab-btn active" data-tab="viz" onclick="switchTab('viz')">Visualizations</button>
+          <button class="tab-btn" data-tab="feed" onclick="switchTab('feed')">Activity Feed</button>
+        </div>
+        <div id="feed-controls" class="flex items-center gap-2" style="display:none;">
+          <input id="feed-search" type="text" placeholder="Search messages..." style="display:none; background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 3px 8px; border-radius: 6px; font-size: 11px; width: 160px; outline: none;" />
+          <button id="toggle-raw" class="toggle-btn" onclick="toggleRawMessages()">Show Raw</button>
+        </div>
+      </div>
+      <div id="tab-viz" class="tab-content" style="display: flex; gap: 12px; max-height: 240px;">
+        <div id="viz-panel" style="display: contents;"></div>
+      </div>
+      <div id="tab-feed" class="tab-content" style="display: none; max-height: 240px; overflow-y: auto;">
+        <div id="activity-feed"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ VIEW: Session Detail ═══ -->
+<div id="view-session-detail" class="px-6 py-4" style="display:none;">
+  <div class="session-layout">
+    <div class="session-transcript" id="session-transcript"></div>
+    <div class="session-sidebar" id="session-sidebar"></div>
+  </div>
+</div>
+
+<script>
+// ── Router ────────────────────────────────────────────────────────
+const Router = {
+  currentView: 'home',
+  currentParams: {},
+  _prevSessionId: null,
+
+  init() {
+    window.addEventListener('hashchange', () => this.resolve());
+    this.resolve();
+  },
+
+  navigate(path) {
+    window.location.hash = path;
+  },
+
+  resolve() {
+    const hash = window.location.hash.slice(1) || '/';
+    const backBtn = document.getElementById('back-btn');
+    const titleEl = document.getElementById('header-title');
+    const statsBar = document.getElementById('stats-bar');
+    const teamSelect = document.getElementById('team-select');
+    const exportBtn = document.getElementById('export-btn');
+
+    // Hide all views
+    document.getElementById('view-home').style.display = 'none';
+    document.getElementById('view-swarm-detail').style.display = 'none';
+    document.getElementById('view-session-detail').style.display = 'none';
+
+    // Unsubscribe from previous session
+    if (this._prevSessionId && ws && ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: 'unsubscribe_session', sessionId: this._prevSessionId }));
+      this._prevSessionId = null;
+    }
+
+    if (hash.startsWith('/swarm/')) {
+      const name = decodeURIComponent(hash.slice(7));
+      this.currentView = 'swarm-detail';
+      this.currentParams = { name };
+      backBtn.style.display = 'inline-flex';
+      titleEl.textContent = name;
+      statsBar.style.display = 'flex';
+      teamSelect.style.display = 'inline-block';
+      document.getElementById('view-swarm-detail').style.display = 'block';
+      selectedTeam = name;
+      viewingArchive = null;
+      render();
+
+    } else if (hash.startsWith('/archive/')) {
+      const file = decodeURIComponent(hash.slice(9));
+      this.currentView = 'swarm-detail';
+      this.currentParams = { file };
+      backBtn.style.display = 'inline-flex';
+      statsBar.style.display = 'flex';
+      teamSelect.style.display = 'inline-block';
+      document.getElementById('view-swarm-detail').style.display = 'block';
+      loadArchive(file);
+
+    } else if (hash.startsWith('/session/')) {
+      const sessionId = hash.slice(9);
+      this.currentView = 'session-detail';
+      this.currentParams = { sessionId };
+      backBtn.style.display = 'inline-flex';
+      statsBar.style.display = 'none';
+      teamSelect.style.display = 'none';
+      exportBtn.style.display = 'none';
+      document.getElementById('view-session-detail').style.display = 'block';
+      loadSessionDetail(sessionId);
+
+    } else {
+      this.currentView = 'home';
+      this.currentParams = {};
+      backBtn.style.display = 'none';
+      titleEl.textContent = 'CLAUDE CONSOLE';
+      statsBar.style.display = 'none';
+      teamSelect.style.display = 'none';
+      exportBtn.style.display = 'none';
+      document.getElementById('view-home').style.display = 'block';
+      renderHome();
+    }
+  }
+};
+
+// ── State ──────────────────────────────────────────────────────────
+let state = { teams: {}, sessions: [] };
+let selectedTeam = null;
+let showRaw = false;
+let prevStats = {};
+let expandedTasks = new Set();
+let lastUpdateTime = null;
+const startTime = Date.now();
+let viewingArchive = null; // null = live, or { file, data } for archived
+let sessionDetailData = null; // { session, entries } for current session view
+
+// ── Live clocks ────────────────────────────────────────────────────
+function padZ(n) { return String(n).padStart(2, '0'); }
+
+function updateClocks() {
+  // Uptime
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const h = Math.floor(elapsed / 3600);
+  const m = Math.floor((elapsed % 3600) / 60);
+  const s = elapsed % 60;
+  const uptimeEl = document.getElementById('uptime-clock');
+  if (uptimeEl) uptimeEl.textContent = `T+${padZ(h)}:${padZ(m)}:${padZ(s)}`;
+
+  // Last update
+  const lastEl = document.getElementById('last-update');
+  if (lastEl && lastUpdateTime) {
+    const ago = Math.floor((Date.now() - lastUpdateTime) / 1000);
+    if (ago < 3) lastEl.textContent = 'LIVE';
+    else if (ago < 60) lastEl.textContent = `${ago}s ago`;
+    else lastEl.textContent = `${Math.floor(ago / 60)}m ago`;
+    lastEl.style.color = ago < 10 ? 'var(--green)' : 'var(--text-muted)';
+  }
+}
+setInterval(updateClocks, 1000);
+
+// ── Heartbeat ping ─────────────────────────────────────────────────
+function triggerPing() {
+  const container = document.getElementById('ping-indicator');
+  if (!container) return;
+  const ring = document.createElement('div');
+  ring.className = 'ping-ring';
+  container.appendChild(ring);
+  setTimeout(() => ring.remove(), 800);
+}
+
+// ── Color map ──────────────────────────────────────────────────────
+const COLOR_MAP = {
+  green: '#34d399', blue: '#60a5fa', yellow: '#fbbf24', purple: '#a78bfa',
+  red: '#f87171', cyan: '#22d3ee', pink: '#f472b6', orange: '#fb923c',
+  teal: '#2dd4bf', indigo: '#818cf8', lime: '#a3e635', rose: '#fb7185',
+};
+
+function agentColor(member) {
+  if (member.color && COLOR_MAP[member.color]) return COLOR_MAP[member.color];
+  if (member.color) return member.color;
+  // Fallback: hash name to a color
+  const colors = Object.values(COLOR_MAP);
+  let h = 0;
+  for (const c of (member.name || '')) h = ((h << 5) - h + c.charCodeAt(0)) | 0;
+  return colors[Math.abs(h) % colors.length];
+}
+
+// ── Agent status derivation ────────────────────────────────────────
+function deriveAgentStatus(agentName, team) {
+  const inbox = team.inboxes[agentName] || [];
+  const tasks = team.tasks || [];
+
+  // Check if agent owns an in_progress task
+  const ownsActiveTask = tasks.some(t => t.owner === agentName && t.status === 'in_progress');
+
+  // Walk inbox in reverse to find latest status-relevant message
+  for (let i = inbox.length - 1; i >= 0; i--) {
+    const msg = inbox[i];
+    const text = msg.text || '';
+
+    // Try parsing JSON messages
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed.type === 'shutdown_approved' || parsed.type === 'shutdown_response') {
+        if (parsed.approve !== false) return 'shutdown';
+      }
+      if (parsed.type === 'shutdown_request') {
+        // Check if there's a shutdown_approved after this
+        continue;
+      }
+      if (parsed.type === 'idle_notification') {
+        return ownsActiveTask ? 'working' : 'idle';
+      }
+    } catch {
+      // Not JSON — it's a real message
+      return ownsActiveTask ? 'working' : 'active';
+    }
+  }
+
+  // Also check outgoing messages in other inboxes to see if this agent sent a shutdown approval
+  for (const [inboxOwner, msgs] of Object.entries(team.inboxes)) {
+    if (inboxOwner === agentName) continue;
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      const msg = msgs[i];
+      if (msg.from !== agentName) continue;
+      const text = msg.text || '';
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.type === 'shutdown_approved') return 'shutdown';
+      } catch {}
+      break; // Only check most recent message from this agent
+    }
+  }
+
+  return ownsActiveTask ? 'working' : 'initializing';
+}
+
+// ── Task column classification ─────────────────────────────────────
+function classifyTask(task, allTasks) {
+  if (task.status === 'completed') return 'completed';
+  if (task.status === 'in_progress') return 'in_progress';
+  // Check if blocked
+  if (task.blockedBy && task.blockedBy.length > 0) {
+    const blocking = task.blockedBy.some(depId => {
+      const dep = allTasks.find(t => t.id === depId);
+      return dep && dep.status !== 'completed';
+    });
+    if (blocking) return 'blocked';
+  }
+  return 'pending';
+}
+
+// ── Build complete member list (config + discovered from inboxes/tasks) ──
+function getAllMembers(team) {
+  const configMembers = (team.config && team.config.members) || [];
+  const memberMap = new Map();
+
+  // Start with config members
+  for (const m of configMembers) {
+    memberMap.set(m.name, { ...m });
+  }
+
+  // Discover agents from inbox keys
+  for (const agentName of Object.keys(team.inboxes || {})) {
+    if (!memberMap.has(agentName)) {
+      // Infer color from messages they sent to others
+      let color = null;
+      for (const msgs of Object.values(team.inboxes || {})) {
+        const msg = msgs.find(m => m.from === agentName && m.color);
+        if (msg) { color = msg.color; break; }
+      }
+      memberMap.set(agentName, { name: agentName, agentType: 'general-purpose', color: color || null });
+    }
+  }
+
+  // Discover agents from task owners
+  for (const task of (team.tasks || [])) {
+    if (task.owner && !memberMap.has(task.owner)) {
+      memberMap.set(task.owner, { name: task.owner, agentType: 'general-purpose' });
+    }
+  }
+
+  // Discover agents from inbox message senders
+  for (const msgs of Object.values(team.inboxes || {})) {
+    for (const msg of msgs) {
+      if (msg.from && !memberMap.has(msg.from)) {
+        memberMap.set(msg.from, { name: msg.from, agentType: 'general-purpose', color: msg.color || null });
+      }
+    }
+  }
+
+  return Array.from(memberMap.values());
+}
+
+// ── Home Screen ────────────────────────────────────────────────────
+function renderHome() {
+  const container = document.getElementById('home-content');
+  const teams = state.teams || {};
+  const sessions = state.sessions || [];
+  const history = state.history || [];
+
+  const teamNames = Object.keys(teams);
+  const activeSessions = sessions.filter(s => s.isActive);
+  const recentSessions = sessions.filter(s => !s.isActive).slice(0, 12);
+
+  let html = '';
+
+  // Active Now section
+  const hasActive = teamNames.length > 0 || activeSessions.length > 0;
+  if (hasActive) {
+    html += '<div class="home-section-title">Active Now</div>';
+    html += '<div class="home-card-grid">';
+
+    // Active swarms
+    for (const name of teamNames) {
+      const team = teams[name];
+      const members = (team.config && team.config.members) || [];
+      const tasks = team.tasks || [];
+      const completed = tasks.filter(t => t.status === 'completed').length;
+      const desc = (team.config && team.config.description) || '';
+
+      html += `<div class="home-card active-card" onclick="Router.navigate('/swarm/${encodeURIComponent(name)}')">
+        <div class="flex items-center justify-between">
+          <span class="card-type-badge swarm">Swarm</span>
+          <span class="active-dot"></span>
+        </div>
+        <div class="card-title">${escHtml(name)}</div>
+        ${desc ? `<div class="text-xs mt-1" style="color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escHtml(desc)}</div>` : ''}
+        <div class="card-meta">
+          <span>&#x1f916; ${members.length} agents</span>
+          <span>&#x2611; ${completed}/${tasks.length} tasks</span>
+        </div>
+      </div>`;
+    }
+
+    // Active sessions
+    for (const s of activeSessions) {
+      html += renderSessionCard(s, true);
+    }
+
+    html += '</div>';
+  }
+
+  // Recent Sessions section
+  if (recentSessions.length > 0) {
+    html += '<div class="home-section-title">Recent Sessions</div>';
+    html += '<div class="home-card-grid">';
+    for (const s of recentSessions) {
+      html += renderSessionCard(s, false);
+    }
+    html += '</div>';
+  }
+
+  // Archived Swarms section
+  if (history.length > 0) {
+    html += '<div class="home-section-title">Archived Swarms</div>';
+    html += '<div class="home-card-grid">';
+    for (const h of history) {
+      const d = h.archivedAt ? new Date(h.archivedAt).toLocaleDateString() : '';
+      html += `<div class="home-card" onclick="Router.navigate('/archive/${encodeURIComponent(h.file)}')">
+        <div class="flex items-center justify-between">
+          <span class="card-type-badge swarm">Swarm</span>
+          <span class="text-xs font-mono" style="color: var(--text-muted);">${d}</span>
+        </div>
+        <div class="card-title">${escHtml(h.name)}</div>
+        <div class="card-meta">
+          <span>&#x1f916; ${h.agentCount} agents</span>
+          <span>&#x2611; ${h.taskCount} tasks</span>
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  // Empty state
+  if (!hasActive && recentSessions.length === 0 && history.length === 0) {
+    html = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; color: var(--text-muted); text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">&#x1f4bb;</div>
+      <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">No Activity Yet</div>
+      <div style="font-size: 13px; max-width: 400px; line-height: 1.6;">
+        Start a Claude Code session or launch a swarm &mdash; they will appear here automatically.
+      </div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderSessionCard(s, isActive) {
+  const title = s.summary || s.firstPrompt || 'Untitled session';
+  const modified = s.modified ? timeAgo(new Date(s.modified)) : '';
+  const projName = s.projectPath ? s.projectPath.split('/').filter(Boolean).pop() : '';
+
+  return `<div class="home-card ${isActive ? 'active-card' : ''}" onclick="Router.navigate('/session/${s.sessionId}')">
+    <div class="flex items-center justify-between">
+      <span class="card-type-badge ${isActive ? 'active' : 'session'}">${isActive ? 'Live' : 'Session'}</span>
+      ${isActive ? '<span class="active-dot"></span>' : `<span class="text-xs font-mono" style="color: var(--text-muted);">${modified}</span>`}
+    </div>
+    <div class="card-title">${escHtml(title)}</div>
+    <div class="card-meta">
+      <span>&#x1f4ac; ${s.messageCount} msgs</span>
+      ${projName ? `<span>&#x1f4c1; ${escHtml(projName)}</span>` : ''}
+      ${s.gitBranch ? `<span>&#x1f33f; ${escHtml(s.gitBranch)}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function timeAgo(date) {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+  if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+  return Math.floor(seconds / 86400) + 'd ago';
+}
+
+// ── Session Detail ─────────────────────────────────────────────────
+async function loadSessionDetail(sessionId) {
+  const titleEl = document.getElementById('header-title');
+  const transcript = document.getElementById('session-transcript');
+  const sidebar = document.getElementById('session-sidebar');
+
+  transcript.innerHTML = '<div style="color: var(--text-muted); padding: 20px;">Loading transcript...</div>';
+  sidebar.innerHTML = '';
+
+  try {
+    const res = await fetch(`/api/session/${sessionId}?tail=200`);
+    if (!res.ok) throw new Error('Not found');
+    const data = await res.json();
+    sessionDetailData = data;
+
+    titleEl.textContent = data.session.summary || data.session.firstPrompt || 'Session';
+
+    renderSessionSidebar(data.session);
+    renderSessionTranscript(data.entries);
+
+    // Subscribe to live updates
+    Router._prevSessionId = sessionId;
+    if (ws && ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: 'subscribe_session', sessionId }));
+    }
+  } catch (e) {
+    transcript.innerHTML = '<div style="color: var(--red); padding: 20px;">Failed to load session transcript.</div>';
+  }
+}
+
+function renderSessionSidebar(session) {
+  const sidebar = document.getElementById('session-sidebar');
+  const created = session.created ? new Date(session.created).toLocaleString() : 'Unknown';
+  const modified = session.modified ? new Date(session.modified).toLocaleString() : 'Unknown';
+  const projName = session.projectPath || '';
+
+  sidebar.innerHTML = `
+    <div class="meta-group">
+      <div class="meta-label">Status</div>
+      <div class="meta-value">${session.isActive
+        ? '<span style="color: var(--green);">&#x25CF; Active</span>'
+        : '<span style="color: var(--text-muted);">&#x25CB; Ended</span>'}</div>
+    </div>
+    <div class="meta-group">
+      <div class="meta-label">Messages</div>
+      <div class="meta-value font-mono">${session.messageCount || 0}</div>
+    </div>
+    <div class="meta-group">
+      <div class="meta-label">Project</div>
+      <div class="meta-value font-mono" style="font-size: 11px;">${escHtml(projName)}</div>
+    </div>
+    ${session.gitBranch ? `<div class="meta-group">
+      <div class="meta-label">Branch</div>
+      <div class="meta-value font-mono">${escHtml(session.gitBranch)}</div>
+    </div>` : ''}
+    <div class="meta-group">
+      <div class="meta-label">Created</div>
+      <div class="meta-value" style="font-size: 12px;">${created}</div>
+    </div>
+    <div class="meta-group">
+      <div class="meta-label">Last Modified</div>
+      <div class="meta-value" style="font-size: 12px;">${modified}</div>
+    </div>
+    <div class="meta-group">
+      <div class="meta-label">Session ID</div>
+      <div class="meta-value font-mono" style="font-size: 10px; color: var(--text-muted);">${session.sessionId}</div>
+    </div>
+  `;
+}
+
+function renderSessionTranscript(entries) {
+  const container = document.getElementById('session-transcript');
+  container.innerHTML = entries.map(renderSessionEntry).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderSessionEntry(entry) {
+  if (entry.kind === 'user') {
+    const text = (entry.text || '').substring(0, 2000);
+    return `<div class="transcript-entry user-msg">
+      <div class="entry-label">You ${entry.timestamp ? '<span class="timestamp" style="font-weight: 400; margin-left: 8px;">' + new Date(entry.timestamp).toLocaleTimeString() + '</span>' : ''}</div>
+      <div class="entry-text">${escHtml(text)}</div>
+    </div>`;
+  }
+
+  if (entry.kind === 'assistant') {
+    let html = `<div class="transcript-entry assistant-msg">`;
+    html += `<div class="entry-label">Claude ${entry.timestamp ? '<span class="timestamp" style="font-weight: 400; margin-left: 8px;">' + new Date(entry.timestamp).toLocaleTimeString() + '</span>' : ''}</div>`;
+
+    for (const part of (entry.parts || [])) {
+      if (part.type === 'text') {
+        html += `<div class="entry-text">${escHtml(part.text)}</div>`;
+      } else if (part.type === 'tool_use') {
+        const icon = toolIcon(part.name);
+        html += `<div class="tool-call-card">
+          <div class="tool-icon">${icon}</div>
+          <div style="min-width: 0;">
+            <div class="tool-name">${escHtml(part.name)}</div>
+            ${part.detail ? `<div class="tool-detail">${escHtml(part.detail)}</div>` : ''}
+          </div>
+        </div>`;
+      }
+    }
+
+    html += '</div>';
+    return html;
+  }
+
+  return '';
+}
+
+function toolIcon(name) {
+  const icons = {
+    Bash: '&#x1f4bb;', Read: '&#x1f4d6;', Write: '&#x270f;', Edit: '&#x270f;',
+    Glob: '&#x1f50d;', Grep: '&#x1f50e;', Task: '&#x1f4cb;', WebSearch: '&#x1f310;',
+    WebFetch: '&#x1f310;', AskUserQuestion: '&#x2753;', NotebookEdit: '&#x1f4d3;',
+  };
+  return icons[name] || '&#x1f527;';
+}
+
+function appendSessionEntries(entries) {
+  if (Router.currentView !== 'session-detail') return;
+  const container = document.getElementById('session-transcript');
+  if (!container) return;
+  const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+  const html = entries.map(renderSessionEntry).join('');
+  container.insertAdjacentHTML('beforeend', html);
+  if (wasAtBottom) container.scrollTop = container.scrollHeight;
+
+  // Update session data
+  if (sessionDetailData) {
+    sessionDetailData.entries = (sessionDetailData.entries || []).concat(entries);
+  }
+}
+
+// ── Swarm Detail Render ────────────────────────────────────────────
+function renderSwarmDetail() {
+  const teamNames = Object.keys(state.teams);
+  const history = state.history || [];
+
+  // Team selector — live teams + archived
+  const select = document.getElementById('team-select');
+  let options = teamNames.map(n => `<option value="live:${n}"${(!viewingArchive && n === selectedTeam) ? ' selected' : ''}>${n}</option>`).join('');
+  if (history.length > 0) {
+    options += '<option disabled>── Archive ──</option>';
+    options += history.map(h => {
+      const d = h.archivedAt ? new Date(h.archivedAt).toLocaleDateString() : '';
+      const sel = (viewingArchive && viewingArchive.file === h.file) ? ' selected' : '';
+      return `<option value="archive:${h.file}"${sel}>${h.name} (${d})</option>`;
+    }).join('');
+  }
+  select.innerHTML = options;
+
+  const hasActiveTeams = teamNames.length > 0;
+  if (!hasActiveTeams && !viewingArchive) {
+    document.getElementById('no-teams').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+    select.parentElement.style.visibility = history.length > 0 ? 'visible' : 'visible';
+    return;
+  }
+
+  document.getElementById('no-teams').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'grid';
+
+  // Archive banner
+  const banner = document.getElementById('archive-banner');
+  if (viewingArchive && viewingArchive.data) {
+    const d = viewingArchive.data.archivedAt ? new Date(viewingArchive.data.archivedAt).toLocaleString() : '';
+    document.getElementById('archive-label').textContent = `Viewing archived swarm "${viewingArchive.data.name}" — archived ${d}`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+
+  // If viewing an archive, use that data
+  if (viewingArchive && viewingArchive.data) {
+    renderStats(viewingArchive.data);
+    renderAgents(viewingArchive.data);
+    renderTaskBoard(viewingArchive.data);
+    renderFeed(viewingArchive.data);
+    return;
+  }
+
+  if (!selectedTeam || !state.teams[selectedTeam]) {
+    selectedTeam = teamNames[0];
+    if (selectedTeam) select.value = 'live:' + selectedTeam;
+  }
+
+  const team = state.teams[selectedTeam];
+  if (!team) return;
+
+  renderStats(team);
+  renderAgents(team);
+  renderTaskBoard(team);
+  renderFeed(team);
+}
+
+// ── Top-level render dispatch ──────────────────────────────────────
+function render() {
+  if (Router.currentView === 'home') {
+    renderHome();
+  } else if (Router.currentView === 'swarm-detail') {
+    renderSwarmDetail();
+  }
+  // session-detail updates via appendSessionEntries, not full re-render
+}
+
+// ── Stats bar ──────────────────────────────────────────────────────
+function renderStats(team) {
+  const tasks = team.tasks || [];
+  const members = getAllMembers(team);
+  const counts = {
+    agents: members.length,
+    tasks: tasks.length,
+    completed: tasks.filter(t => t.status === 'completed').length,
+    active: tasks.filter(t => t.status === 'in_progress').length,
+  };
+
+  const bar = document.getElementById('stats-bar');
+  const stats = [
+    { key: 'agents', label: 'Agents', color: 'var(--cyan)', value: counts.agents },
+    { key: 'tasks', label: 'Tasks', color: 'var(--text-primary)', value: counts.tasks },
+    { key: 'active', label: 'Active', color: 'var(--cyan)', value: counts.active },
+    { key: 'completed', label: 'Done', color: 'var(--green)', value: counts.completed },
+  ];
+
+  bar.innerHTML = stats.map(s => {
+    const pop = prevStats[s.key] !== undefined && prevStats[s.key] !== s.value ? ' animate-count-pop' : '';
+    return `<div class="text-center">
+      <div class="stat-value${pop}" style="color: ${s.color}">${s.value}</div>
+      <div class="stat-label">${s.label}</div>
+    </div>`;
+  }).join('');
+
+  prevStats = counts;
+}
+
+// ── Agent Roster ───────────────────────────────────────────────────
+function renderAgents(team) {
+  const members = getAllMembers(team);
+  const roster = document.getElementById('agent-roster');
+  if (!roster) return;
+
+  roster.innerHTML = members.map(m => {
+    const color = agentColor(m);
+    const status = deriveAgentStatus(m.name, team);
+    const statusLabels = {
+      active: 'Active', idle: 'Idle', working: 'Working',
+      shutdown: 'Shut down', initializing: 'Initializing'
+    };
+    const statusLabel = (status === 'working' || status === 'active')
+      ? `<span>${statusLabels[status]}<span class="typing-dots"></span></span>`
+      : statusLabels[status] || status;
+
+    // Find what task they're working on
+    const activeTask = (team.tasks || []).find(t => t.owner === m.name && t.status === 'in_progress');
+    const taskLine = activeTask ? `<div class="text-xs mt-1 truncate" style="color: ${color}; opacity: 0.8;">${activeTask.activeForm || activeTask.subject}</div>` : '';
+
+    const roleLabel = m.agentType === 'team-lead' ? '<span class="text-xs ml-1" style="color: var(--amber);">&#9733;</span>' : '';
+
+    return `<div class="agent-card ${status}" style="--agent-color: ${color}; --glow-color: ${color}40;">
+      <div class="flex items-center gap-2">
+        <span class="status-dot ${status}" style="--agent-color: ${color}; background: ${status === 'shutdown' ? '#4b5563' : color};"></span>
+        <span class="font-mono text-sm font-semibold">${m.name}${roleLabel}</span>
+      </div>
+      <div class="flex items-center justify-between mt-1">
+        <span class="text-xs" style="color: var(--text-muted);">${statusLabel}</span>
+        <span class="text-xs font-mono" style="color: var(--text-muted);">${m.model || ''}</span>
+      </div>
+      ${taskLine}
+    </div>`;
+  }).join('');
+}
+
+// ── Task Board ─────────────────────────────────────────────────────
+function renderTaskBoard(team) {
+  const tasks = team.tasks || [];
+  const members = getAllMembers(team);
+
+  const columns = {
+    blocked: { label: 'Blocked', color: 'var(--red)', bg: 'rgba(248,113,113,0.06)', tasks: [] },
+    pending: { label: 'Pending', color: 'var(--amber)', bg: 'rgba(251,191,36,0.06)', tasks: [] },
+    in_progress: { label: 'In Progress', color: 'var(--cyan)', bg: 'rgba(34,211,238,0.06)', tasks: [] },
+    completed: { label: 'Completed', color: 'var(--green)', bg: 'rgba(52,211,153,0.06)', tasks: [] },
+  };
+
+  for (const task of tasks) {
+    const col = classifyTask(task, tasks);
+    if (columns[col]) columns[col].tasks.push(task);
+  }
+
+  const board = document.getElementById('task-board');
+  if (!board) return;
+  board.innerHTML = Object.entries(columns).map(([key, col]) => {
+    const cards = col.tasks.map(task => {
+      const member = members.find(m => m.name === task.owner);
+      const color = member ? agentColor(member) : 'var(--text-muted)';
+      const expanded = expandedTasks.has(task.id);
+      const badgeClass = `badge-${classifyTask(task, tasks)}`;
+
+      // Dependency info
+      let depHtml = '';
+      if (task.blockedBy && task.blockedBy.length > 0) {
+        const depNames = task.blockedBy.map(id => {
+          const dep = tasks.find(t => t.id === id);
+          return dep ? `#${id}` : `#${id}`;
+        }).join(', ');
+        depHtml = `<div class="dep-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+          blocked by ${depNames}
+        </div>`;
+      }
+      if (task.blocks && task.blocks.length > 0) {
+        const blockNames = task.blocks.map(id => `#${id}`).join(', ');
+        depHtml += `<div class="dep-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 7l-9.2 9.2M7 7v10h10"/></svg>
+          blocks ${blockNames}
+        </div>`;
+      }
+
+      const statusClass = 'status-' + classifyTask(task, tasks);
+      return `<div class="task-card ${statusClass} ${expanded ? 'expanded' : ''}" onclick="toggleTask('${task.id}')">
+        <div class="flex items-center justify-between gap-2">
+          <span class="font-mono text-xs" style="color: var(--text-muted);">#${task.id}</span>
+          <span class="badge ${badgeClass}">${classifyTask(task, tasks).replace('_', ' ')}</span>
+        </div>
+        <div class="text-sm font-semibold mt-1" style="line-height: 1.3;">${escHtml(task.subject || '')}</div>
+        ${task.owner ? `<div class="flex items-center gap-1 mt-2">
+          <span class="status-dot" style="background: ${color}; width: 6px; height: 6px;"></span>
+          <span class="text-xs font-mono" style="color: ${color};">${task.owner}</span>
+        </div>` : ''}
+        ${depHtml}
+        <div class="description text-xs" style="color: var(--text-muted); line-height: 1.5; white-space: pre-wrap;">${escHtml(task.description || '')}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="kanban-col">
+      <div class="kanban-header" style="background: ${col.bg}; color: ${col.color};">
+        <span>${col.label}</span>
+        <span class="font-mono">${col.tasks.length}</span>
+      </div>
+      <div>${cards || '<div class="text-xs text-center py-4" style="color: var(--text-muted);">No tasks</div>'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Activity Feed ──────────────────────────────────────────────────
+function renderFeed(team) {
+  const members = getAllMembers(team);
+  const allMessages = [];
+
+  // Collect all messages from all inboxes
+  for (const [inboxOwner, msgs] of Object.entries(team.inboxes || {})) {
+    for (const msg of msgs) {
+      allMessages.push({ ...msg, to: inboxOwner });
+    }
+  }
+
+  // Sort by timestamp
+  allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  // Filter
+  const filtered = showRaw ? allMessages : allMessages.filter(msg => {
+    try {
+      const parsed = JSON.parse(msg.text);
+      // Filter out system messages
+      if (['idle_notification', 'shutdown_request', 'shutdown_approved',
+           'shutdown_response', 'task_assignment', 'plan_approval_request',
+           'plan_approval_response'].includes(parsed.type)) {
+        return false;
+      }
+    } catch {}
+    return true;
+  });
+
+  // Deduplicate messages (same from + text + timestamp can appear in multiple inboxes)
+  const seen = new Set();
+  const unique = filtered.filter(msg => {
+    const key = `${msg.from}|${msg.timestamp}|${(msg.text || '').substring(0, 80)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const feed = document.getElementById('activity-feed');
+  if (!feed) return;
+  const wasAtBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 50;
+
+  feed.innerHTML = unique.slice(-100).map(msg => {
+    const member = members.find(m => m.name === msg.from);
+    const color = member ? agentColor(member) : (msg.color && COLOR_MAP[msg.color]) || 'var(--text-muted)';
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : '';
+
+    let displayText = msg.summary || '';
+    if (!displayText) {
+      try {
+        const parsed = JSON.parse(msg.text);
+        displayText = `[${parsed.type}]`;
+      } catch {
+        displayText = (msg.text || '').substring(0, 200);
+      }
+    }
+
+    return `<div class="feed-msg" style="--msg-color: ${color};">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="status-dot" style="background: ${color}; width: 6px; height: 6px;"></span>
+        <span class="font-mono text-xs font-semibold" style="color: ${color};">${msg.from || '?'}</span>
+        <span class="text-xs" style="color: var(--text-muted);">&rarr; ${msg.to}</span>
+        <span class="timestamp ml-auto">${time}</span>
+      </div>
+      <div class="text-xs" style="color: var(--text-primary); opacity: 0.85;">${escHtml(displayText)}</div>
+    </div>`;
+  }).join('');
+
+  if (wasAtBottom) {
+    feed.scrollTop = feed.scrollHeight;
+  }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────
+function escHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function toggleTask(id) {
+  if (expandedTasks.has(id)) expandedTasks.delete(id);
+  else expandedTasks.add(id);
+  render();
+}
+
+let activeTab = 'viz';
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  const target = document.getElementById('tab-' + tab);
+  if (target) target.style.display = tab === 'viz' ? 'flex' : 'block';
+  const fc = document.getElementById('feed-controls');
+  if (fc) fc.style.display = tab === 'feed' ? 'flex' : 'none';
+}
+
+function exitArchive() {
+  viewingArchive = null;
+  const teamNames = Object.keys(state.teams);
+  if (teamNames.length > 0) selectedTeam = teamNames[0];
+  render();
+}
+
+async function loadArchive(file) {
+  try {
+    const res = await fetch('/api/history/' + encodeURIComponent(file));
+    const data = await res.json();
+    viewingArchive = { file, data };
+    document.getElementById('header-title').textContent = data.name || 'Archive';
+  } catch {
+    viewingArchive = null;
+  }
+  render();
+}
+
+function toggleRawMessages() {
+  showRaw = !showRaw;
+  document.getElementById('toggle-raw').classList.toggle('active', showRaw);
+  document.getElementById('toggle-raw').textContent = showRaw ? 'Hide Raw' : 'Show Raw';
+  render();
+}
+
+// ── Team selector ──────────────────────────────────────────────────
+document.getElementById('team-select').addEventListener('change', async (e) => {
+  const val = e.target.value;
+  expandedTasks.clear();
+
+  if (val.startsWith('archive:')) {
+    const file = val.slice('archive:'.length);
+    Router.navigate('/archive/' + encodeURIComponent(file));
+  } else {
+    const name = val.replace('live:', '');
+    Router.navigate('/swarm/' + encodeURIComponent(name));
+  }
+});
+
+// ── WebSocket ──────────────────────────────────────────────────────
+let ws;
+let reconnectDelay = 1000;
+
+function connect() {
+  const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${protocol}://${location.host}`);
+
+  ws.onopen = () => {
+    document.getElementById('connection-status').style.background = 'var(--green)';
+    document.getElementById('connection-status').title = 'Connected';
+    reconnectDelay = 1000;
+
+    // Re-subscribe to session if viewing one
+    if (Router.currentView === 'session-detail' && Router.currentParams.sessionId) {
+      ws.send(JSON.stringify({ type: 'subscribe_session', sessionId: Router.currentParams.sessionId }));
+    }
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+
+      // Handle session transcript updates
+      if (data.type === 'session_update') {
+        appendSessionEntries(data.entries || []);
+        return;
+      }
+
+      // Regular state update
+      state = data;
+      lastUpdateTime = Date.now();
+      triggerPing();
+      render();
+    } catch {}
+  };
+
+  ws.onclose = () => {
+    document.getElementById('connection-status').style.background = 'var(--red)';
+    document.getElementById('connection-status').title = 'Disconnected — reconnecting...';
+    setTimeout(connect, reconnectDelay);
+    reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+// ── Initial load (fallback to REST) ────────────────────────────────
+async function init() {
+  try {
+    const res = await fetch('/api/state');
+    state = await res.json();
+    lastUpdateTime = Date.now();
+  } catch {}
+  connect();
+  Router.init();
+}
+
+// ── Feature plugin system ───────────────────────────────────────────
+// Features register render hooks that run after each render cycle.
+// Each feature .js file calls Dashboard.registerFeature(name, { render(team), init() })
+window.Dashboard = {
+  features: {},
+  registerFeature(name, feature) {
+    this.features[name] = feature;
+    if (feature.init) feature.init();
+    console.log(`🔌 Feature loaded: ${name}`);
+  },
+  // Expose internals for features
+  getState: () => state,
+  getSelectedTeam: () => selectedTeam,
+  getViewingArchive: () => viewingArchive,
+  getCurrentTeam: () => {
+    if (viewingArchive && viewingArchive.data) return viewingArchive.data;
+    return state.teams[selectedTeam] || null;
+  },
+  getAllMembers,
+  agentColor,
+  deriveAgentStatus,
+  classifyTask,
+  escHtml,
+  COLOR_MAP,
+  triggerPing,
+};
+
+// Patch render to call feature render hooks
+const _originalRender = render;
+render = function() {
+  _originalRender();
+  // Only run feature plugins when viewing swarm detail
+  if (Router.currentView !== 'swarm-detail') return;
+  const team = Dashboard.getCurrentTeam();
+  if (!team) return;
+  for (const [name, feature] of Object.entries(Dashboard.features)) {
+    try { if (feature.render) feature.render(team); } catch(e) { console.error(`Feature ${name} render error:`, e); }
+  }
+};
+
+init();
+</script>
+
+<!-- Agent detail modal -->
+<div id="agent-modal" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);">
+  <div id="agent-modal-content" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:700px; max-width:90vw; max-height:80vh; overflow-y:auto; background:var(--bg-card); border:1px solid var(--border-glow); border-radius:16px; padding:24px;">
+  </div>
+</div>
+
+<!-- Confetti canvas -->
+<canvas id="confetti-canvas" style="position:fixed; inset:0; z-index:200; pointer-events:none;"></canvas>
+
+<!-- Feature modules (loaded after main script) -->
+<script src="/features/progress-bar.js"></script>
+<script src="/features/elapsed-timers.js"></script>
+<script src="/features/comm-graph.js"></script>
+<script src="/features/agent-panel.js"></script>
+<script src="/features/search-filter.js"></script>
+<script src="/features/timeline.js"></script>
+<script src="/features/export.js"></script>
+<script src="/features/notifications.js"></script>
+<script src="/features/confetti.js"></script>
+<script src="/features/sounds.js"></script>
+<script src="/features/shortcuts.js"></script>
+</body>
+</html>
